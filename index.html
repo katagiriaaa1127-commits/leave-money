@@ -87,6 +87,12 @@ input[readonly]{background:var(--sunk);color:var(--muted)}
 .confirm{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:6px;background:var(--warn-soft);font-size:13.5px}
 .sub-h{font-weight:700;font-size:13.5px}
 .foot.strong{color:var(--ink);font-weight:700}
+.lv-list{display:flex;flex-direction:column;gap:6px}
+.lv{display:grid;grid-template-columns:minmax(0,1fr) 116px auto;gap:6px;align-items:center;padding:6px;border-radius:6px;background:var(--bg)}
+.lv .lv-when{grid-column:1/3;font-size:13px;padding:4px 6px}
+.lv input,.lv select{background:var(--surface);font-size:14px;padding:5px 7px}
+.lv .yen input{padding-right:26px;text-align:right}
+.lv .del{background:none;border:0;color:var(--muted);font-size:18px;line-height:1;padding:0 4px;grid-row:1/3;grid-column:3}
 .extra{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;padding:8px;background:var(--bg);border-radius:6px}
 .extra .r{display:grid;grid-template-columns:118px minmax(0,1fr);gap:6px}
 .extra input{font-size:13.5px;padding:5px 7px;background:var(--surface)}
@@ -261,7 +267,11 @@ h2{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 12px;tex
 
   <fieldset>
     <legend>家計</legend>
-    <label class="f">毎月の生活費（家賃・食費など）<span class="yen"><input type="text" class="money" id="living" inputmode="numeric" autocomplete="off"></span></label>
+    <div class="sub-h">毎月の生活費（内訳）</div>
+    <div id="livingList" class="lv-list"></div>
+    <button type="button" class="btn-ghost" id="addLiving">＋ 費目を追加</button>
+    <div class="hh"><span>毎月の生活費の合計</span><b id="livingTotal"></b></div>
+    <span class="foot">「いつから」で、おむつ代は出産後から、保育料は復職後から、のように始まる月を選べます。</span>
     <div class="row2">
       <label class="f">あなたの貯蓄<span class="yen"><input type="text" class="money" id="savings" inputmode="numeric" autocomplete="off"></span></label>
       <label class="f">配偶者の貯蓄<span class="yen"><input type="text" class="money" id="spSavings" inputmode="numeric" autocomplete="off"></span></label>
@@ -343,12 +353,13 @@ h2{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 12px;tex
       <li>住民税は前年の所得にかかるため、休業中も納付書で払います（6月・8月・10月・翌1月）。1〜5月に休業に入る場合は、5月分までを最後のお給料から一括で引かれるのが原則です。翌年度以降の額は働いた月数からの概算です。</li>
       <li>配偶者の育休のうち、出産後8週以内の最大28日を産後パパ育休（出生時育児休業給付金67%）、残りを通常の育休として計算しています。休業中の配偶者の給与は日割りで減らし、社会保険料の免除による手取りの増加は含めていません。</li>
       <li>出生後休業支援給付金（13%）は、配偶者が出産後8週以内に14日以上育休を取ると配偶者に、出産後16週以内に14日以上取るとあなたにもつく想定です。最大28日分です。</li>
+      <li>生活費は内訳の合計を毎月27日ごろの出金として計算します。「出産後から」の費目は出産した月から、「復職後から」の費目は復職した月から加わります。</li>
       <li>出産育児一時金（50万円）は病院への直接支払制度を使う想定です。費用が50万円を下回れば差額を後から受け取れます。出産費用の無償化（2026年6月公布の改正法）は施行日が未定のため反映していません。</li>
       <li>児童手当は3歳未満で月15,000円（第3子以降30,000円）、出生の翌月分から、偶数月に前月までの2か月分が支給されます。</li>
       <li>「夫婦で共有するリンク」には入力内容がそのまま入っています。リンクを受け取った人は中身を見られるので、送り先に気をつけてください。リンクの内容はサーバーには保存されません。</li>
       <li>振込日はおおよその目安です。勤務先・ハローワーク・加入している健康保険の処理によって前後します。</li>
     </ul>
-    <p class="foot" style="margin-top:12px">アプリのバージョン：<span id="appVer">2026.10.29-3</span></p>
+    <p class="foot" style="margin-top:12px">アプリのバージョン：<span id="appVer">2026.10.29-4</span></p>
     <p class="foot" style="margin-top:12px">入力した内容はこのブラウザの中だけで計算され、どこにも送信されません。概算のシミュレーションのため、正確な金額は勤務先や社会保険労務士にご確認ください。</p>
   </section>
 </main>
@@ -377,9 +388,17 @@ const today=new Date();const ex=addMonths(D(today.getFullYear(),today.getMonth()
 const defaults={due:ex.toISOString().slice(0,10),multi:false,endMode:"1y",endCustom:"",spouseLeave:false,
   salary:300000,takehome:235000,payday:"next",resTax:180000,spouse:280000,spSalary:360000,spPayday:"same",spOffset:0,spDays:28,living:330000,savings:1500000,spSavings:800000,bonus:0,incThis:0,socThis:0,actualBirth:"",paidDays:0,paidMode:"before",workWeek:"5",autoTake:false,age40:false,spAutoTake:false,spAge40:false,birthCost:520000,order:"1",
   extras:[{m:keyAdd(key(ex),-1),label:"ベビー用品（例）",amt:-100000},{m:keyAdd(key(ex),2),label:"妊婦のための支援給付・出生後分（例）",amt:50000}]};
+// 生活費の内訳。when: all=毎月 / birth=出産後から / ret=復職後から
+const LV_EXAMPLE=[["家賃・住宅ローン",90000,"all"],["食費",60000,"all"],["水道光熱費",20000,"all"],["通信費（スマホ・ネット）",12000,"all"],["保険料",15000,"all"],["車・交通費",25000,"all"],["日用品",10000,"all"],["夫婦のおこづかい",40000,"all"],["その他",28000,"all"],["おむつ・ミルク",15000,"birth"],["保育料",30000,"ret"]];
+function ensureLiving(st){if(Array.isArray(st.livingItems))return st;
+  const lv=Number(st.living);
+  if(st.living==null||lv===330000)st.livingItems=LV_EXAMPLE.map(([label,amt,when])=>({label,amt,when}));
+  else st.livingItems=[{label:"生活費（まとめて入力した分）",amt:lv||0,when:"all"}].concat(LV_EXAMPLE.map(([label,,when])=>({label,amt:0,when})));
+  return st}
+const livingSum=(st,when)=>(st.livingItems||[]).filter(x=>!when||x.when===when).reduce((t,x)=>t+(Number(x.amt)||0),0);
 let state;
 try{state=JSON.parse(localStorage.getItem("leaveplan")||"null")}catch(e){state=null}
-state=Object.assign(JSON.parse(JSON.stringify(defaults)),state||{});
+state=ensureLiving(Object.assign(JSON.parse(JSON.stringify(defaults)),state||{}));
 // ボーナス欄を最初から用意（金額0のうちは計算に入らない）
 if(!state.bonusSeeded){const d=parse(state.due)||ex;const ls=addDays(d,-41);let jun=null,dec=null;
   for(let n=-1;n<24&&!(jun&&dec);n++){const k=keyAdd(key(ls),n);const m=+k.split("-")[1];if(m===6&&!jun)jun=k;if(m===12&&!dec)dec=k}
@@ -387,7 +406,7 @@ if(!state.bonusSeeded){const d=parse(state.due)||ex;const ls=addDays(d,-41);let 
     {m:jun,label:"夏のボーナス（配偶者・手取り）",amt:0},{m:dec,label:"冬のボーナス（配偶者・手取り）",amt:0}].concat(state.extras||[]);
   state.bonusSeeded=true}
 
-const fields=["due","actualBirth","multi","paidDays","paidMode","workWeek","endMode","endCustom","spouseLeave","salary","takehome","payday","resTax","incThis","socThis","bonus","autoTake","age40","spAutoTake","spAge40","spouse","spSalary","spPayday","spOffset","spDays","living","savings","spSavings","birthCost","order"];
+const fields=["due","actualBirth","multi","paidDays","paidMode","workWeek","endMode","endCustom","spouseLeave","salary","takehome","payday","resTax","incThis","socThis","bonus","autoTake","age40","spAutoTake","spAge40","spouse","spSalary","spPayday","spOffset","spDays","savings","spSavings","birthCost","order"];
 // 金額に3けたごとのコンマを付ける
 const toNum=v=>{const t=String(v).replace(/[，,\s円]/g,"").replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/[−ー－]/g,"-");const n=parseInt(t.replace(/(?!^)-/g,"").replace(/[^\d-]/g,""),10);return isNaN(n)?0:n};
 const comma=n=>{n=Number(n)||0;return n===0?"0":n.toLocaleString("ja-JP")};
@@ -423,10 +442,22 @@ function applyAuto(){
   $("takehome").readOnly=!!state.autoTake;$("spouse").readOnly=!!state.spAutoTake;
   if(state.autoTake){const c=calcTakehome(state.salary,state.age40,state.resTax);state.takehome=c.take;$("takehome").value=comma(c.take);showBreak($("takeBreak"),c,"（今年度の年額÷12）")}
   if(state.spAutoTake){const c=calcTakehome(state.spSalary,state.spAge40,estResTax(state.spSalary||0,0).tax);state.spouse=c.take;$("spouse").value=comma(c.take);showBreak($("spBreak"),c,"（月給から概算）")}}
-function loadForm(){fields.forEach(f=>{const el=$(f);if(el.type==="checkbox")el.checked=!!state[f];else if(el.classList.contains("money"))el.value=comma(state[f]??0);else el.value=state[f]??""});$("customWrap").hidden=state.endMode!=="custom";$("spWrap").hidden=!state.spouseLeave;renderExtras()}
+function loadForm(){if(typeof renderLiving==="function"&&state.livingItems)renderLiving();fields.forEach(f=>{const el=$(f);if(el.type==="checkbox")el.checked=!!state[f];else if(el.classList.contains("money"))el.value=comma(state[f]??0);else el.value=state[f]??""});$("customWrap").hidden=state.endMode!=="custom";$("spWrap").hidden=!state.spouseLeave;renderExtras()}
 function readForm(){fields.forEach(f=>{const el=$(f);state[f]=el.type==="checkbox"?el.checked:el.classList.contains("money")?toNum(el.value):(el.type==="number"?Number(el.value||0):el.value)});$("customWrap").hidden=state.endMode!=="custom";$("spWrap").hidden=!state.spouseLeave}
 function save(){try{localStorage.setItem("leaveplan",JSON.stringify(state));const t=new Date();const el=document.getElementById("savedAt");if(el)el.textContent=`自動保存しました（${t.getHours()}:${String(t.getMinutes()).padStart(2,"0")}）。入力内容はこのスマホの中だけに保存されます。`}catch(e){}}
 
+function renderLiving(){const box=$("livingList");box.innerHTML="";state.livingItems.forEach((x,i)=>{
+  const d=document.createElement("div");d.className="lv";
+  d.innerHTML=`<input type="text" id="exlvl${i}" value="${esc(x.label||"")}" aria-label="費目" placeholder="費目"><span class="yen"><input type="text" class="money" id="exlvm${i}" value="${comma(x.amt)}" inputmode="numeric" autocomplete="off" aria-label="金額"></span>
+    <select class="lv-when" id="exlvt${i}" aria-label="いつから"><option value="all">毎月</option><option value="birth">出産後から</option><option value="ret">復職後から</option></select>
+    <button type="button" class="del" aria-label="この費目を削除">×</button>`;
+  d.querySelector(`#exlvt${i}`).value=x.when||"all";
+  d.querySelector(`#exlvl${i}`).addEventListener("input",e=>{x.label=e.target.value;update()});
+  d.querySelector(`#exlvm${i}`).addEventListener("input",e=>{x.amt=toNum(e.target.value);update()});
+  d.querySelector(`#exlvt${i}`).addEventListener("change",e=>{x.when=e.target.value;update()});
+  d.querySelector(".del").addEventListener("click",()=>{state.livingItems.splice(i,1);renderLiving();update()});
+  box.appendChild(d)})}
+$("addLiving").addEventListener("click",()=>{state.livingItems.push({label:"",amt:0,when:"all"});renderLiving();update();const l=state.livingItems.length-1;const el=document.getElementById("exlvl"+l);if(el)el.focus()});
 function renderExtras(){const box=$("extras");box.innerHTML="";state.extras.forEach((x,i)=>{
   const d=document.createElement("div");d.className="extra";
   d.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><div class="r"><input type="month" id="exm${i}" value="${x.m}" aria-label="月"><input type="text" id="exl${i}" value="${x.label.replace(/"/g,"&quot;")}" aria-label="内容" placeholder="内容"></div><div class="yen"><input type="text" id="exa${i}" class="money ${x.amt>0?"plus":x.amt<0?"minus":""}" value="${comma(x.amt)}" autocomplete="off" aria-label="金額（出金はマイナス）"></div></div><button type="button" class="del" aria-label="この項目を削除">×</button>`;
@@ -585,7 +616,12 @@ function compute(s){
   // 毎月の固定
   let k=startK;const keys=[];while(k<=endK){keys.push(k);k=keyAdd(k,1)}
   keys.forEach(kk=>{const [y,m]=kk.split("-").map(Number);
-    if(s.living)push(D(y,m,27),"生活費",-s.living,"out",{fixed:true})});
+    const retKey=key(ret),bKey=key(birth);
+    const items=(s.livingItems||[]).filter(x=>(Number(x.amt)||0)!==0&&(x.when==="birth"?kk>=bKey:x.when==="ret"?kk>=retKey:true));
+    const base=items.filter(x=>x.when!=="birth"&&x.when!=="ret").reduce((t,x)=>t+Number(x.amt),0);
+    if(base)push(D(y,m,27),"生活費（毎月の分）",-base,"out",{fixed:true});
+    items.filter(x=>x.when==="birth"||x.when==="ret").forEach(x=>{const first=(x.when==="birth"?bKey:retKey)===kk;
+      push(D(y,m,27),(x.label||"（名前なし）")+(first?(x.when==="birth"?"（出産後から）":"（復職後から）"):""),-Number(x.amt),"out",first?{keyItem:true}:{fixed:true})})});
   // 配偶者の給与（育休の日数分を日割りで差し引く）
   if(s.spouse){for(let n=-1;n<keys.length;n++){const mk=keyAdd(startK,n);const [y,m]=mk.split("-").map(Number);const dm=dim(y,m);
     const off=sp?overlap(sp.hs,sp.he,D(y,m,1),D(y,m,dm)):0;const amt=Math.round(s.spouse*(dm-off)/dm);
@@ -664,7 +700,7 @@ function render(r){
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-function update(){readForm();applyAuto();save();$("hhTotal").textContent=yen((state.savings||0)+(state.spSavings||0));const r=compute(state);if(!r)return;render(r);
+function update(){readForm();state.living=livingSum(state,"all");$("livingTotal").textContent=`${yen(livingSum(state,"all"))}${livingSum(state,"birth")?`（出産後 +${comma(livingSum(state,"birth"))}円）`:""}${livingSum(state,"ret")?`（復職後 +${comma(livingSum(state,"ret"))}円）`:""}`;applyAuto();save();$("hhTotal").textContent=yen((state.savings||0)+(state.spSavings||0));const r=compute(state);if(!r)return;render(r);
   const ty=new Date().getFullYear();$("incLabel").textContent=`${ty}年の年収（${ty+1}年度の住民税の計算に使います）`;
   $("fyNote").innerHTML=r.fyInfo.map(f=>`${f.fy}年度（${f.cy}年の収入分）：${f.tax.toLocaleString("ja-JP")}円${f.inc!=null?`（年収${(f.inc/10000).toLocaleString("ja-JP",{maximumFractionDigits:1})}万円・${f.src}）`:`（${f.src}）`}`).join("<br>");
   const wd=t=>"日月火水木金土"[t.getUTCDay()];const fd=t=>`${t.getUTCFullYear()}年${t.getUTCMonth()+1}月${t.getUTCDate()}日（${wd(t)}）`;
@@ -693,7 +729,7 @@ $("shareBtn").addEventListener("click",()=>{readForm();const url=baseUrl()+"#d="
 let pending=null;
 try{const h=location.hash;if(h.startsWith("#d=")){pending=dec(h.slice(3));$("importBar").hidden=false}}catch(e){pending=null}
 const clearHash=()=>{try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}};
-$("importYes").addEventListener("click",()=>{if(pending){state=Object.assign(JSON.parse(JSON.stringify(defaults)),pending);save();loadForm();update()}$("importBar").hidden=true;clearHash()});
+$("importYes").addEventListener("click",()=>{if(pending){state=ensureLiving(Object.assign(JSON.parse(JSON.stringify(defaults)),pending));save();loadForm();update()}$("importBar").hidden=true;clearHash()});
 $("importNo").addEventListener("click",()=>{$("importBar").hidden=true;clearHash()});
 // バックアップ・復元・リセット
 $("backupBtn").addEventListener("click",async()=>{readForm();const now=new Date();const ymdS=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
@@ -710,7 +746,7 @@ $("restoreFile").addEventListener("change",e=>{const f=e.target.files&&e.target.
     const when=o.savedAt?new Date(o.savedAt):null;$("restoreMsg").textContent=`${when?`${when.getFullYear()}年${when.getMonth()+1}月${when.getDate()}日 ${when.getHours()}:${String(when.getMinutes()).padStart(2,"0")}に保存した`:"選んだ"}バックアップを読み込みます。いま入っている内容はこのバックアップに置き換わります。`;$("restoreBox").hidden=false}
     catch(err){restorePending=null;$("restoreBox").hidden=false;$("restoreMsg").textContent="このファイルは読み込めませんでした。「バックアップを保存」で作ったファイルを選んでください。"}
     e.target.value=""};rd.readAsText(f)});
-$("restoreYes").addEventListener("click",()=>{if(restorePending){state=Object.assign(JSON.parse(JSON.stringify(defaults)),restorePending,{bonusSeeded:true});save();loadForm();update();$("savedAt").textContent="バックアップから戻しました。"}restorePending=null;$("restoreBox").hidden=true});
+$("restoreYes").addEventListener("click",()=>{if(restorePending){state=ensureLiving(Object.assign(JSON.parse(JSON.stringify(defaults)),restorePending,{bonusSeeded:true}));save();loadForm();update();$("savedAt").textContent="バックアップから戻しました。"}restorePending=null;$("restoreBox").hidden=true});
 $("restoreNo").addEventListener("click",()=>{restorePending=null;$("restoreBox").hidden=true});
 $("resetBtn").addEventListener("click",()=>{$("resetBox").hidden=false});
 $("resetNo").addEventListener("click",()=>{$("resetBox").hidden=true});
