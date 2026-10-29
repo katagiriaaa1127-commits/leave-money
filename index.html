@@ -87,6 +87,7 @@ input[readonly]{background:var(--sunk);color:var(--muted)}
 .btn-danger.solid{background:var(--out);color:var(--surface);font-weight:700}
 .confirm{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:6px;background:var(--warn-soft);font-size:13.5px}
 .sub-h{font-weight:700;font-size:13.5px}
+.warnTxt{color:var(--out);font-weight:700}
 .foot.strong{color:var(--ink);font-weight:700}
 .lv-list{display:flex;flex-direction:column;gap:6px}
 .lv{--cat:var(--c10);display:grid;grid-template-columns:minmax(0,1fr) 116px auto;gap:6px;align-items:center;padding:6px 6px 6px 10px;border-radius:6px;background:var(--bg);background:color-mix(in srgb,var(--cat) 13%,var(--surface));border-left:5px solid var(--cat)}
@@ -275,6 +276,14 @@ h2{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 12px;tex
       <span class="foot strong" id="fyNote"></span>
     </div>
     <div class="est">
+      <span class="sub-h">ふるさと納税</span>
+      <div class="row2">
+        <label class="f"><span id="furuLabel1">今年の寄付額</span><span class="yen"><input type="text" class="money" id="furu1" inputmode="numeric" autocomplete="off"></span></label>
+        <label class="f"><span id="furuLabel2">来年の寄付額（予定）</span><span class="yen"><input type="text" class="money" id="furu2" inputmode="numeric" autocomplete="off"></span></label>
+      </div>
+      <span class="foot" id="furuNote"></span>
+    </div>
+    <div class="est">
       <label class="f">昨年の賞与（年間・額面）<span class="yen"><input type="text" class="money" id="bonus" inputmode="numeric" autocomplete="off"></span></label>
       <button type="button" class="btn-calc" id="calcTax">月給から住民税を計算</button>
       <span class="foot" id="taxNote"></span>
@@ -379,6 +388,7 @@ h2{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 12px;tex
       <li>産休・育休中は申出により健康保険料・厚生年金保険料が免除され、給付金は非課税です。</li>
       <li>「手取りを月給から自動計算する」は、協会けんぽ栃木県の2026年度の料率（健康保険9.82%、40歳以上は介護保険1.62%を加算、子ども・子育て支援金0.23%、いずれも半分が本人負担）、厚生年金18.3%（半分）、雇用保険0.5%で社会保険料を計算し、所得税は扶養なしの年額を12で割って概算します。健康保険組合や薬剤師国保に入っている場合、扶養家族がいる場合は実際の手取りと差が出ます。</li>
       <li>「月給から住民税を計算」は、昨年も今と同じ月給だったとして、社会保険料を年収の15%、基礎控除43万円、税率10%、均等割5,000円で概算します。お住まいの地域の上乗せ分や各種控除は反映されません。</li>
+      <li>ふるさと納税は、寄付した翌年度の住民税から「寄付額−2,000円」が引かれる想定です（上限の目安を超えた分は、ほぼ控除されません）。上限の目安は、住民税の所得割の20%をもとにした一般的な計算式で出しています。</li>
       <li>翌年度以降の住民税は、その前年の給与年収から、給与所得控除・社会保険料（入力がなければ年収の15%）・基礎控除43万円を差し引いて、税率10%と均等割5,000円で計算します。休業した年は給与が少ないので、非課税やごく少額になることがあります。ボーナス欄の金額は手取りなので、額面は手取り÷0.8として計算しています。</li>
       <li>住民税は前年の所得にかかるため、休業中も納付書で払います（6月・8月・10月・翌1月）。1〜5月に休業に入る場合は、5月分までを最後のお給料から一括で引かれるのが原則です。翌年度以降の額は働いた月数からの概算です。</li>
       <li>配偶者の育休のうち、出産後8週以内の最大28日を産後パパ育休（出生時育児休業給付金67%）、残りを通常の育休として計算しています。休業中の配偶者の給与は日割りで減らし、社会保険料の免除による手取りの増加は含めていません。</li>
@@ -391,7 +401,7 @@ h2{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 12px;tex
       <li>「夫婦で共有するリンク」には入力内容がそのまま入っています。リンクを受け取った人は中身を見られるので、送り先に気をつけてください。リンクの内容はサーバーには保存されません。</li>
       <li>振込日はおおよその目安です。勤務先・ハローワーク・加入している健康保険の処理によって前後します。</li>
     </ul>
-    <p class="foot" style="margin-top:12px">アプリのバージョン：<span id="appVer">2026.10.29-10</span></p>
+    <p class="foot" style="margin-top:12px">アプリのバージョン：<span id="appVer">2026.10.29-11</span></p>
     <p class="foot" style="margin-top:12px">入力した内容はこのブラウザの中だけで計算され、どこにも送信されません。概算のシミュレーションのため、正確な金額は勤務先や社会保険労務士にご確認ください。</p>
   </section>
 </main>
@@ -418,7 +428,7 @@ const days=(a,b)=>Math.round((b-a)/864e5)+1;
 // 初期値（例）
 const today=new Date();const ex=addMonths(D(today.getFullYear(),today.getMonth()+1,15),5);
 const defaults={due:ex.toISOString().slice(0,10),multi:false,endMode:"1y",endCustom:"",spouseLeave:false,
-  salary:300000,takehome:235000,payday:"next",resTax:180000,spouse:280000,spSalary:360000,spPayday:"same",spOffset:0,spDays:28,living:330000,savings:1500000,spSavings:800000,nisa:0,spNisa:0,nisaMonthly:0,nisaPause:false,bonus:0,incThis:0,socThis:0,actualBirth:"",paidDays:0,paidMode:"before",workWeek:"5",autoTake:false,age40:false,spAutoTake:false,spAge40:false,birthCost:520000,order:"1",
+  salary:300000,takehome:235000,payday:"next",resTax:180000,spouse:280000,spSalary:360000,spPayday:"same",spOffset:0,spDays:28,living:330000,savings:1500000,spSavings:800000,nisa:0,spNisa:0,nisaMonthly:0,nisaPause:false,bonus:0,incThis:0,socThis:0,furu1:0,furu2:0,actualBirth:"",paidDays:0,paidMode:"before",workWeek:"5",autoTake:false,age40:false,spAutoTake:false,spAge40:false,birthCost:520000,order:"1",
   extras:[{m:keyAdd(key(ex),-1),label:"ベビー用品（例）",amt:-100000},{m:keyAdd(key(ex),2),label:"妊婦のための支援給付・出生後分（例）",amt:50000}]};
 // 生活費の内訳。when: all=毎月 / birth=出産後から / ret=復職後から
 const LV_EXAMPLE=[["家賃・住宅ローン",90000,"all"],["食費",60000,"all"],["水道光熱費",20000,"all"],["通信費（スマホ・ネット）",12000,"all"],["保険料",15000,"all"],["車・交通費",25000,"all"],["日用品",10000,"all"],["夫婦のおこづかい",40000,"all"],["その他",28000,"all"],["おむつ・ミルク",15000,"birth"],["保育料",30000,"ret"]];
@@ -438,7 +448,7 @@ if(!state.bonusSeeded){const d=parse(state.due)||ex;const ls=addDays(d,-41);let 
     {m:jun,label:"夏のボーナス（配偶者・手取り）",amt:0},{m:dec,label:"冬のボーナス（配偶者・手取り）",amt:0}].concat(state.extras||[]);
   state.bonusSeeded=true}
 
-const fields=["due","actualBirth","multi","paidDays","paidMode","workWeek","endMode","endCustom","spouseLeave","salary","takehome","payday","resTax","incThis","socThis","bonus","autoTake","age40","spAutoTake","spAge40","spouse","spSalary","spPayday","spOffset","spDays","savings","spSavings","nisa","spNisa","nisaMonthly","nisaPause","birthCost","order"];
+const fields=["due","actualBirth","multi","paidDays","paidMode","workWeek","endMode","endCustom","spouseLeave","salary","takehome","payday","resTax","incThis","socThis","furu1","furu2","bonus","autoTake","age40","spAutoTake","spAge40","spouse","spSalary","spPayday","spOffset","spDays","savings","spSavings","nisa","spNisa","nisaMonthly","nisaPause","birthCost","order"];
 // 金額に3けたごとのコンマを付ける
 const toNum=v=>{const t=String(v).replace(/[，,\s円]/g,"").replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/[−ー－]/g,"-");const n=parseInt(t.replace(/(?!^)-/g,"").replace(/[^\d-]/g,""),10);return isNaN(n)?0:n};
 const comma=n=>{n=Number(n)||0;return n===0?"0":n.toLocaleString("ja-JP")};
@@ -524,6 +534,24 @@ function renderExtras(focusItem,what){sortExtras();const box=$("extras");box.inn
   if(focusItem===x){d.classList.add("flash");setTimeout(()=>d.classList.remove("flash"),1600);try{d.scrollIntoView({block:"nearest",behavior:"smooth"})}catch(e){}
     if(what==="new"){const l=d.querySelector(`#exl${i}`);if(l)l.focus()}}})}
 // 住民税の概算（昨年の給与所得のみ・扶養なし・標準税率10%・均等割5,000円）
+// 住民税の所得割と、所得税の税率（ふるさと納税の上限計算に使う）
+function resTaxDetail(inc,social){
+  inc=Math.max(0,inc||0);let kyu;
+  if(inc<=1900000)kyu=650000;else if(inc<=3600000)kyu=inc*0.3+80000;else if(inc<=6600000)kyu=inc*0.2+440000;else if(inc<=8500000)kyu=inc*0.1+1100000;else kyu=1950000;
+  const shotoku=Math.max(0,Math.floor(inc-kyu));
+  const shaho=social>0?social:Math.round(inc*0.15);
+  if(shotoku<=450000)return {wari:0,tax:0,rate:0};
+  const kazei=Math.max(0,Math.floor((shotoku-shaho-430000)/1000)*1000);
+  const wari=Math.max(0,Math.floor((kazei*0.1-2500)/100)*100);
+  const basic=shotoku<=1320000?950000:shotoku<=3360000?880000:shotoku<=4890000?680000:shotoku<=6550000?630000:shotoku<=23500000?580000:480000;
+  const t=Math.max(0,shotoku-shaho-basic);
+  const rate=t<=0?0:t<=1950000?.05:t<=3300000?.1:t<=6950000?.2:t<=9000000?.23:t<=18000000?.33:t<=40000000?.4:.45;
+  return {wari,tax:wari+5000,rate}}
+// ふるさと納税の上限の目安（自己負担2,000円で済む寄付額）
+function furuLimit(d){if(!d.wari)return 0;return Math.floor((d.wari*0.2)/(0.9-d.rate*1.021)+2000)}
+// 寄付による住民税の減額（ワンストップ特例として、控除がすべて住民税から引かれる想定）
+function furuDeduction(d,don){if(!don||!d.wari)return 0;const lim=furuLimit(d);
+  const ded=Math.max(0,Math.min(don,lim)-2000)+Math.max(0,don-lim)*0.1;return Math.min(Math.round(ded),d.wari)}
 function resTaxFromIncome(inc,social){
   inc=Math.max(0,inc||0);let kyu;
   if(inc<=1900000)kyu=650000;else if(inc<=3600000)kyu=inc*0.3+80000;else if(inc<=6600000)kyu=inc*0.2+440000;else if(inc<=8500000)kyu=inc*0.1+1100000;else kyu=1950000;
@@ -643,9 +671,11 @@ function compute(s){
     for(let m=1;m<=12;m++){const dm=dim(cy,m);let wd=0;for(let d=1;d<=dm;d++){const t=D(cy,m,d);if(t<leaveStart||t>=ret)wd++}inc+=(s.salary||0)*wd/dm}
     if(cy===thisYear)inc+=(s.bonus||0);else inc+=bonusGross(cy);return Math.round(inc)}
   function taxFY(fy){const cy=fy-1;
-    if(cy<thisYear)return {fy,cy,tax:s.resTax||0,inc:null,src:"今年度と同じ額"};
-    if(cy===thisYear&&s.incThis>0){return {fy,cy,inc:s.incThis,tax:resTaxFromIncome(s.incThis,s.socThis||0),src:"入力した年収から計算"}}
-    const inc=incomeOf(cy);return {fy,cy,inc,tax:resTaxFromIncome(inc,0),src:cy===thisYear?"月給と賞与の見込みから計算":"この年にもらう給与から計算"}}
+    if(cy<thisYear)return {fy,cy,tax:s.resTax||0,inc:null,src:"今年度と同じ額",ded:0};
+    const useIn=cy===thisYear&&s.incThis>0;const inc=useIn?s.incThis:incomeOf(cy);
+    const det=resTaxDetail(inc,useIn?(s.socThis||0):0);
+    const don=cy===thisYear?(s.furu1||0):cy===thisYear+1?(s.furu2||0):0;const ded=furuDeduction(det,don);
+    return {fy,cy,inc,tax:Math.max(0,det.tax-ded),ded,don,limit:furuLimit(det),src:useIn?"入力した年収から計算":cy===thisYear?"月給と賞与の見込みから計算":"この年にもらう給与から計算"}}
   const curFY=leaveStart.getUTCMonth()+1<=5?leaveStart.getUTCFullYear()-1:leaveStart.getUTCFullYear();
   const curTax=taxFY(curFY);
   const mTax=curTax.tax/12;const lsY=leaveStart.getUTCFullYear(),lsM=leaveStart.getUTCMonth()+1;
@@ -653,10 +683,10 @@ function compute(s){
   if(lsM<=5){const lump=Math.round(mTax*(5-lsM+1));push(lastPayDate,`住民税（${curFY}年度の5月分までを最後のお給料から一括）`,-lump,"out",{keyItem:true})}
   else{const remain=Math.round(mTax*(12-lsM+1+5));const dues=[D(lsY,8,31),D(lsY,10,31),D(lsY+1,1,31)].filter(d=>(d.getUTCMonth()+1)>lsM+1||d.getUTCFullYear()>lsY);
     dues.forEach(d=>push(d,`住民税（${curFY}年度の残り・納付書）`,-Math.round(remain/dues.length),"out",{keyItem:true}))}
-  const fyInfo=curTax.inc!=null?[curTax]:[];
+  const fyInfo=curTax.inc!=null?[curTax]:[];const allFY=[thisYear+1,thisYear+2,thisYear+3].map(taxFY);
   const firstFY=lsM<=5?lsY:lsY+1;
   for(let fy=firstFY;fy<=firstFY+2;fy++){const {cy,tax,inc,src}=taxFY(fy);
-    fyInfo.push({fy,cy,tax,inc,src});
+    fyInfo.push(taxFY(fy));
     if(tax<=0)continue;
     [D(fy,6,30),D(fy,8,31),D(fy,10,31),D(fy+1,1,31)].forEach(d=>{if(key(d)<retK)push(d,`住民税（${fy}年度・${cy}年の所得分）`,-Math.round(tax/4),"out",{est:true,keyItem:true})})}
 
@@ -696,7 +726,7 @@ function compute(s){
     nisaBal+=items.filter(e=>e.cat==="nisa").reduce((t,e)=>t-e.amt,0);const inn=items.filter(e=>e.amt>0).reduce((t,e)=>t+e.amt,0);const out=items.filter(e=>e.amt<0).reduce((t,e)=>t+e.amt,0);bal+=inn+out;
     const own=items.filter(e=>e.amt>0&&(e.cat==="own"||e.cat==="public")&&!/児童手当/.test(e.label)).reduce((t,e)=>t+e.amt,0);
     return {k:kk,items,inn,out,net:inn+out,bal,own,nisaBal}});
-  return {fyInfo,birth,due,actual:!!parse(s.actualBirth),leaveStart,legalStart,paidStart,paidEnd,paidUsed,halfDay,paidTotal,paidLeft,paidDaysList,offDays:t=>dayW(t)===0,lastWork,postEnd,ccStart,ccEnd,ret,shDaily,shTotal,periods,shien,months,list,
+  return {fyInfo,allFY,birth,due,actual:!!parse(s.actualBirth),leaveStart,legalStart,paidStart,paidEnd,paidUsed,halfDay,paidTotal,paidLeft,paidDaysList,offDays:t=>dayW(t)===0,lastWork,postEnd,ccStart,ccEnd,ret,shDaily,shTotal,periods,shien,months,list,
     total67:addDays(ccStart,179),sp,start,nisaStart};
 }
 
@@ -767,7 +797,13 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 
 function update(){readForm();state.living=livingSum(state,"all");$("livingTotal").textContent=`${yen(livingSum(state,"all"))}${livingSum(state,"birth")?`（出産後 +${comma(livingSum(state,"birth"))}円）`:""}${livingSum(state,"ret")?`（復職後 +${comma(livingSum(state,"ret"))}円）`:""}`;applyAuto();save();$("hhCash").textContent=yen((state.savings||0)+(state.spSavings||0));$("hhNisa").textContent=yen((state.nisa||0)+(state.spNisa||0));$("hhTotal").textContent=yen((state.savings||0)+(state.spSavings||0)+(state.nisa||0)+(state.spNisa||0));const r=compute(state);if(!r)return;render(r);
   const ty=new Date().getFullYear();$("incLabel").textContent=`${ty}年の年収（${ty+1}年度の住民税の計算に使います）`;
-  $("fyNote").innerHTML=r.fyInfo.map(f=>`${f.fy}年度（${f.cy}年の収入分）：${f.tax.toLocaleString("ja-JP")}円${f.inc!=null?`（年収${(f.inc/10000).toLocaleString("ja-JP",{maximumFractionDigits:1})}万円・${f.src}）`:`（${f.src}）`}`).join("<br>");
+  $("fyNote").innerHTML=r.fyInfo.map(f=>`${f.fy}年度（${f.cy}年の収入分）：${f.tax.toLocaleString("ja-JP")}円${f.inc!=null?`（年収${(f.inc/10000).toLocaleString("ja-JP",{maximumFractionDigits:1})}万円・${f.src}${f.ded?`・ふるさと納税で−${f.ded.toLocaleString("ja-JP")}円`:""}）`:`（${f.src}）`}`).join("<br>");
+  // ふるさと納税の上限の目安
+  $("furuLabel1").textContent=`${ty}年の寄付額`;$("furuLabel2").textContent=`${ty+1}年の寄付額（予定）`;
+  const lim=y=>{const f=r.allFY.find(x=>x.cy===y);return f?f.limit:null};
+  const l1=lim(ty),l2=lim(ty+1);
+  const line=(y,l,don)=>l==null?"":`${y}年の上限の目安：<b>${l?comma(l)+"円":"0円（寄付しても控除されません）"}</b>${don>l&&l!==null?`<span class="warnTxt">　入力した${comma(don)}円は上限を超えています。超えた分はほぼ自己負担になります。</span>`:""}`;
+  $("furuNote").innerHTML=[line(ty,l1,state.furu1||0),line(ty+1,l2,state.furu2||0)].filter(Boolean).join("<br>")+`<br>自己負担2,000円で済む寄付額の目安です。産休・育休に入る年は給与が少ないため、上限が大きく下がります。ワンストップ特例を使い、控除はすべて翌年度の住民税から引かれる想定です。`;
   const wd=t=>"日月火水木金土"[t.getUTCDay()];const fd=t=>`${t.getUTCFullYear()}年${t.getUTCMonth()+1}月${t.getUTCDate()}日（${wd(t)}）`;
   const sd=t=>`${t.getUTCMonth()+1}/${t.getUTCDate()}（${wd(t)}）`;
   // 有給を使う日を、休みの日で区切ったまとまりで表示する
