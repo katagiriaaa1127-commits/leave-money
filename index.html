@@ -391,7 +391,7 @@ h2{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 12px;tex
       <li>「夫婦で共有するリンク」には入力内容がそのまま入っています。リンクを受け取った人は中身を見られるので、送り先に気をつけてください。リンクの内容はサーバーには保存されません。</li>
       <li>振込日はおおよその目安です。勤務先・ハローワーク・加入している健康保険の処理によって前後します。</li>
     </ul>
-    <p class="foot" style="margin-top:12px">アプリのバージョン：<span id="appVer">2026.10.29-9</span></p>
+    <p class="foot" style="margin-top:12px">アプリのバージョン：<span id="appVer">2026.10.29-10</span></p>
     <p class="foot" style="margin-top:12px">入力した内容はこのブラウザの中だけで計算され、どこにも送信されません。概算のシミュレーションのため、正確な金額は勤務先や社会保険労務士にご確認ください。</p>
   </section>
 </main>
@@ -559,14 +559,14 @@ function compute(s){
   const dayW=t=>{const w=t.getUTCDay();if(w===0)return 0;if(w===6)return s.workWeek==="6"?1:s.workWeek==="6h"?0.5:0;return 1};
   const isWork=t=>dayW(t)>0;
   const paidTotal=Math.max(0,Math.round((Number(s.paidDays)||0)*2)/2);
-  let leaveStart=legalStart,paidStart=null,paidEnd=null,paidUsed=0,halfDay=null,rem=paidTotal;
+  let leaveStart=legalStart,paidStart=null,paidEnd=null,paidUsed=0,halfDay=null,rem=paidTotal;const paidDaysList=[];
   const prevWeekday=t=>{let u=addDays(t,-1);while(dayW(u)!==1)u=addDays(u,-1);return u};
   if(rem>0&&s.paidMode==="instead"){let t=legalStart;
-    while(rem>0&&t<birth){const w=dayW(t);if(w>0){if(w<=rem){rem-=w;paidUsed+=w;paidEnd=t}else break}t=addDays(t,1)}
+    while(rem>0&&t<birth){const w=dayW(t);if(w>0){if(w<=rem){rem-=w;paidUsed+=w;paidEnd=t;paidDaysList.push({t,w})}else break}t=addDays(t,1)}
     if(paidUsed){paidStart=legalStart;leaveStart=addDays(paidEnd,1)}
     if(rem===0.5){halfDay=prevWeekday(legalStart);paidUsed+=0.5;rem=0}}
   else if(rem>0){let t=addDays(legalStart,-1);
-    while(rem>0){const w=dayW(t);if(w>0){if(w<=rem){rem-=w;paidUsed+=w;paidStart=t}else{halfDay=t;paidUsed+=0.5;rem=0}}t=addDays(t,-1)}
+    while(rem>0){const w=dayW(t);if(w>0){if(w<=rem){rem-=w;paidUsed+=w;paidStart=t;paidDaysList.unshift({t,w})}else{halfDay=t;paidUsed+=0.5;rem=0}}t=addDays(t,-1)}
     if(paidStart)paidEnd=addDays(legalStart,-1)}
   const paidLeft=rem;
   // 最終出勤日：半日有給の日があればその日（午前勤務・午後有給）
@@ -696,7 +696,7 @@ function compute(s){
     nisaBal+=items.filter(e=>e.cat==="nisa").reduce((t,e)=>t-e.amt,0);const inn=items.filter(e=>e.amt>0).reduce((t,e)=>t+e.amt,0);const out=items.filter(e=>e.amt<0).reduce((t,e)=>t+e.amt,0);bal+=inn+out;
     const own=items.filter(e=>e.amt>0&&(e.cat==="own"||e.cat==="public")&&!/児童手当/.test(e.label)).reduce((t,e)=>t+e.amt,0);
     return {k:kk,items,inn,out,net:inn+out,bal,own,nisaBal}});
-  return {fyInfo,birth,due,actual:!!parse(s.actualBirth),leaveStart,legalStart,paidStart,paidEnd,paidUsed,halfDay,paidTotal,paidLeft,lastWork,postEnd,ccStart,ccEnd,ret,shDaily,shTotal,periods,shien,months,list,
+  return {fyInfo,birth,due,actual:!!parse(s.actualBirth),leaveStart,legalStart,paidStart,paidEnd,paidUsed,halfDay,paidTotal,paidLeft,paidDaysList,offDays:t=>dayW(t)===0,lastWork,postEnd,ccStart,ccEnd,ret,shDaily,shTotal,periods,shien,months,list,
     total67:addDays(ccStart,179),sp,start,nisaStart};
 }
 
@@ -769,8 +769,14 @@ function update(){readForm();state.living=livingSum(state,"all");$("livingTotal"
   const ty=new Date().getFullYear();$("incLabel").textContent=`${ty}年の年収（${ty+1}年度の住民税の計算に使います）`;
   $("fyNote").innerHTML=r.fyInfo.map(f=>`${f.fy}年度（${f.cy}年の収入分）：${f.tax.toLocaleString("ja-JP")}円${f.inc!=null?`（年収${(f.inc/10000).toLocaleString("ja-JP",{maximumFractionDigits:1})}万円・${f.src}）`:`（${f.src}）`}`).join("<br>");
   const wd=t=>"日月火水木金土"[t.getUTCDay()];const fd=t=>`${t.getUTCFullYear()}年${t.getUTCMonth()+1}月${t.getUTCDate()}日（${wd(t)}）`;
+  const sd=t=>`${t.getUTCMonth()+1}/${t.getUTCDate()}（${wd(t)}）`;
+  // 有給を使う日を、休みの日で区切ったまとまりで表示する
+  const runs=[];(r.paidDaysList||[]).forEach(({t,w})=>{const last=runs[runs.length-1];
+    if(last&&days(last.end,t)===2){last.end=t;last.n+=w;if(w<1)last.half=true}else runs.push({start:t,end:t,n:w,half:w<1})});
+  const offName=state.workWeek==="5"?"土日":"日曜日";
+  const runText=runs.map(u=>u.start.getTime()===u.end.getTime()?`${sd(u.start)}${u.half?"半日":""}`:`${sd(u.start)}〜${sd(u.end)}`).join("、");
   const paidRow=r.paidStart?`<span class="k">有給</span><span>${fd(r.paidStart)} 〜 ${fd(r.paidEnd)}</span>
-   <span class="sub">${r.paidUsed}日分を使用（この間はお給料が満額出ます）${r.paidLeft>0?`。産前の期間に使えるのは${r.paidUsed}日までで、${r.paidLeft}日分は残ります`:""}</span>`:(r.halfDay?`<span class="k">有給</span><span>半日（0.5日）</span><span class="sub">最終出勤日を半日勤務にして使います</span>`:"");
+   <span class="sub">有給を使うのは ${r.halfDay&&runs.length&&r.halfDay<runs[0].start?`${sd(r.halfDay)}半日、${runText}`:runText+(r.halfDay?`、${sd(r.halfDay)}半日`:"")} の計${r.paidUsed}日分です。${offName}はもともと休みなので、有給には数えていません${state.workWeek==="6h"?"（土曜は半日分として数えています）":""}。この間もお給料は満額出ます。${r.paidLeft>0?`産前の期間に使えるのは${r.paidUsed}日までで、${r.paidLeft}日分は残ります。`:""}</span>`:(r.halfDay?`<span class="k">有給</span><span>半日（0.5日）</span><span class="sub">最終出勤日を半日勤務にして使います</span>`:"");
   $("periodBox").innerHTML=`<span class="k">出産</span><span>${fd(r.birth)}${r.actual?"":"（予定日）"}</span><span class="k">最終出勤</span><span>${fd(r.lastWork)}${r.halfDay?"（半日勤務・残り半日は有給）":(state.workWeek==="6h"&&r.lastWork.getUTCDay()===6?"（土曜の半日勤務）":"")}</span>${paidRow}<span class="k">産休</span><span>${fd(r.leaveStart)} 〜 ${fd(r.postEnd)}</span>
    <span class="sub">産前 ${Math.max(0,days(r.leaveStart,r.birth))}日・産後 ${days(addDays(r.birth,1),r.postEnd)}日${r.actual?(()=>{const dd=Math.round((r.birth-r.due)/864e5);return dd>0?`（予定日より${dd}日遅れたため、産前休業が延びています）`:dd<0?`（予定日より${-dd}日早く生まれたため、産前休業が短くなっています）`:"（予定日どおり）"})():"（出産日は予定日として計算）"}</span>
    <span class="k">育休</span><span>${fd(r.ccStart)} 〜 ${fd(r.ccEnd)}</span>
