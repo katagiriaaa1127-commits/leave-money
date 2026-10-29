@@ -21,18 +21,18 @@
 /* Layout: 左に入力（PCでは追従）、右に「いつ・いくら」の結果。スマホでは縦一列。 */
 :root{
   --bg:#F2F5F4; --surface:#FFFFFF; --sunk:#E8EEEC; --ink:#1C2829; --muted:#5B6B69; --line:#D6DFDC;
-  --in:#1D7566; --in-soft:#D5ECE6; --out:#B94B62; --out-soft:#F5DDE2; --warn:#9A6512; --warn-soft:#F6E8CF; --gold:#E9C46A; --blanket:#BFDDD5; --hood:#9CCABD; --plus:#D2680A; --minus:#1C8CC9;
+  --in:#1D7566; --in-soft:#D5ECE6; --out:#B94B62; --out-soft:#F5DDE2; --warn:#9A6512; --warn-soft:#F6E8CF; --c1:#3F7CC4; --c2:#E07B39; --c3:#D9A21B; --c4:#8A63C9; --c5:#1F9A8A; --c6:#5E7187; --c7:#D2608B; --c8:#4E9A3E; --c9:#C97B6E; --c10:#9A8F7C; --gold:#E9C46A; --blanket:#BFDDD5; --hood:#9CCABD; --plus:#D2680A; --minus:#1C8CC9;
   --p1:#8FB8D9; --p2:#6E9FC9; --p3:#1D7566; --p4:#7FB5A9; --p5:#C9D3D1;
   --display:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;
   --body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#111817; --surface:#18211F; --sunk:#1F2A28; --ink:#E4EDEB; --muted:#98AAA6; --line:#2B3735;
-  --in:#55C3AE; --in-soft:#1C3A34; --out:#E37C92; --out-soft:#3D2329; --warn:#E0AE5C; --warn-soft:#3A2E18; --gold:#E2B85A; --blanket:#2C4A44; --hood:#3E6A60; --plus:#F59E4C; --minus:#5EC3F2;
+  --in:#55C3AE; --in-soft:#1C3A34; --out:#E37C92; --out-soft:#3D2329; --warn:#E0AE5C; --warn-soft:#3A2E18; --c1:#6FA6E8; --c2:#F2A06A; --c3:#EBC25A; --c4:#B394EA; --c5:#4CC7B5; --c6:#93A6BC; --c7:#EE8FB2; --c8:#86CB74; --c9:#E6A699; --c10:#BDB4A3; --gold:#E2B85A; --blanket:#2C4A44; --hood:#3E6A60; --plus:#F59E4C; --minus:#5EC3F2;
   --p1:#4C7393; --p2:#3E6688; --p3:#3E9C89; --p4:#2F6A5E; --p5:#38443F; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#111817; --surface:#18211F; --sunk:#1F2A28; --ink:#E4EDEB; --muted:#98AAA6; --line:#2B3735;
-  --in:#55C3AE; --in-soft:#1C3A34; --out:#E37C92; --out-soft:#3D2329; --warn:#E0AE5C; --warn-soft:#3A2E18; --gold:#E2B85A; --blanket:#2C4A44; --hood:#3E6A60; --plus:#F59E4C; --minus:#5EC3F2;
+  --in:#55C3AE; --in-soft:#1C3A34; --out:#E37C92; --out-soft:#3D2329; --warn:#E0AE5C; --warn-soft:#3A2E18; --c1:#6FA6E8; --c2:#F2A06A; --c3:#EBC25A; --c4:#B394EA; --c5:#4CC7B5; --c6:#93A6BC; --c7:#EE8FB2; --c8:#86CB74; --c9:#E6A699; --c10:#BDB4A3; --gold:#E2B85A; --blanket:#2C4A44; --hood:#3E6A60; --plus:#F59E4C; --minus:#5EC3F2;
   --p1:#4C7393; --p2:#3E6688; --p3:#3E9C89; --p4:#2F6A5E; --p5:#38443F; color-scheme:dark}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -88,7 +88,9 @@ input[readonly]{background:var(--sunk);color:var(--muted)}
 .sub-h{font-weight:700;font-size:13.5px}
 .foot.strong{color:var(--ink);font-weight:700}
 .lv-list{display:flex;flex-direction:column;gap:6px}
-.lv{display:grid;grid-template-columns:minmax(0,1fr) 116px auto;gap:6px;align-items:center;padding:6px;border-radius:6px;background:var(--bg)}
+.lv{--cat:var(--c10);display:grid;grid-template-columns:minmax(0,1fr) 116px auto;gap:6px;align-items:center;padding:6px 6px 6px 10px;border-radius:6px;background:var(--bg);background:color-mix(in srgb,var(--cat) 13%,var(--surface));border-left:5px solid var(--cat)}
+.lv input[type=text]:not(.money){font-weight:700;color:var(--ink)}
+.lv .lv-when{border-color:color-mix(in srgb,var(--cat) 35%,var(--line))}
 .lv .lv-when{grid-column:1/3;font-size:13px;padding:4px 6px}
 .lv input,.lv select{background:var(--surface);font-size:14px;padding:5px 7px}
 .lv .yen input{padding-right:26px;text-align:right}
@@ -359,7 +361,7 @@ h2{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 12px;tex
       <li>「夫婦で共有するリンク」には入力内容がそのまま入っています。リンクを受け取った人は中身を見られるので、送り先に気をつけてください。リンクの内容はサーバーには保存されません。</li>
       <li>振込日はおおよその目安です。勤務先・ハローワーク・加入している健康保険の処理によって前後します。</li>
     </ul>
-    <p class="foot" style="margin-top:12px">アプリのバージョン：<span id="appVer">2026.10.29-4</span></p>
+    <p class="foot" style="margin-top:12px">アプリのバージョン：<span id="appVer">2026.10.29-5</span></p>
     <p class="foot" style="margin-top:12px">入力した内容はこのブラウザの中だけで計算され、どこにも送信されません。概算のシミュレーションのため、正確な金額は勤務先や社会保険労務士にご確認ください。</p>
   </section>
 </main>
@@ -446,13 +448,16 @@ function loadForm(){if(typeof renderLiving==="function"&&state.livingItems)rende
 function readForm(){fields.forEach(f=>{const el=$(f);state[f]=el.type==="checkbox"?el.checked:el.classList.contains("money")?toNum(el.value):(el.type==="number"?Number(el.value||0):el.value)});$("customWrap").hidden=state.endMode!=="custom";$("spWrap").hidden=!state.spouseLeave}
 function save(){try{localStorage.setItem("leaveplan",JSON.stringify(state));const t=new Date();const el=document.getElementById("savedAt");if(el)el.textContent=`自動保存しました（${t.getHours()}:${String(t.getMinutes()).padStart(2,"0")}）。入力内容はこのスマホの中だけに保存されます。`}catch(e){}}
 
+// 費目名から色を決める（当てはまらないときは並び順で）
+function lvColor(label,i){const t=label||"";const map=[[/家賃|住宅|ローン|管理費/,1],[/食費|食|外食/,2],[/光熱|電気|ガス|水道/,3],[/通信|スマホ|携帯|ネット|Wi-?Fi/i,4],[/保険/,5],[/車|交通|ガソリン|駐車/,6],[/日用品|消耗/,9],[/こづかい|小遣い/,8],[/おむつ|ミルク|ベビー|赤ちゃん/,7],[/保育|幼稚園|教育|習い事/,4],[/その他/,10]];
+  for(const [re,c] of map)if(re.test(t))return `var(--c${c})`;return `var(--c${[1,2,5,7,3,8,4,6,9][i%9]})`}
 function renderLiving(){const box=$("livingList");box.innerHTML="";state.livingItems.forEach((x,i)=>{
-  const d=document.createElement("div");d.className="lv";
+  const d=document.createElement("div");d.className="lv";d.style.setProperty("--cat",lvColor(x.label,i));
   d.innerHTML=`<input type="text" id="exlvl${i}" value="${esc(x.label||"")}" aria-label="費目" placeholder="費目"><span class="yen"><input type="text" class="money" id="exlvm${i}" value="${comma(x.amt)}" inputmode="numeric" autocomplete="off" aria-label="金額"></span>
     <select class="lv-when" id="exlvt${i}" aria-label="いつから"><option value="all">毎月</option><option value="birth">出産後から</option><option value="ret">復職後から</option></select>
     <button type="button" class="del" aria-label="この費目を削除">×</button>`;
   d.querySelector(`#exlvt${i}`).value=x.when||"all";
-  d.querySelector(`#exlvl${i}`).addEventListener("input",e=>{x.label=e.target.value;update()});
+  d.querySelector(`#exlvl${i}`).addEventListener("input",e=>{x.label=e.target.value;d.style.setProperty("--cat",lvColor(x.label,i));update()});
   d.querySelector(`#exlvm${i}`).addEventListener("input",e=>{x.amt=toNum(e.target.value);update()});
   d.querySelector(`#exlvt${i}`).addEventListener("change",e=>{x.when=e.target.value;update()});
   d.querySelector(".del").addEventListener("click",()=>{state.livingItems.splice(i,1);renderLiving();update()});
