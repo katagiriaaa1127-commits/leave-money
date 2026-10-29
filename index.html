@@ -97,6 +97,11 @@ input[readonly]{background:var(--sunk);color:var(--muted)}
 .lv .del{background:none;border:0;color:var(--muted);font-size:18px;line-height:1;padding:0 4px;grid-row:1/3;grid-column:3}
 .extra.flash{animation:flash 1.6s ease-out}
 @keyframes flash{0%,30%{box-shadow:0 0 0 2px var(--in);background:var(--in-soft)}100%{box-shadow:0 0 0 2px transparent}}
+.sav{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);gap:6px 8px;align-items:center}
+.sav-h{font-size:12px;color:var(--muted);font-weight:700}
+.sav-who{font-size:13px;color:var(--muted)}
+.hh-grid{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:8px 10px;border-radius:6px;background:var(--in-soft);font-size:13px;font-variant-numeric:tabular-nums}
+.hh-grid b{text-align:right}.hh-grid .t{border-top:1px solid var(--line);padding-top:4px;margin-top:2px;font-weight:700}.hh-grid b.t{font-size:16px}
 .extra{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;padding:8px;background:var(--bg);border-radius:6px}
 .extra .r{display:grid;grid-template-columns:118px minmax(0,1fr);gap:6px}
 .extra input{font-size:13.5px;padding:5px 7px;background:var(--surface)}
@@ -276,11 +281,24 @@ h2{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 12px;tex
     <button type="button" class="btn-ghost" id="addLiving">＋ 費目を追加</button>
     <div class="hh"><span>毎月の生活費の合計</span><b id="livingTotal"></b></div>
     <span class="foot">「いつから」で、おむつ代は出産後から、保育料は復職後から、のように始まる月を選べます。</span>
-    <div class="row2">
-      <label class="f">あなたの貯蓄<span class="yen"><input type="text" class="money" id="savings" inputmode="numeric" autocomplete="off"></span></label>
-      <label class="f">配偶者の貯蓄<span class="yen"><input type="text" class="money" id="spSavings" inputmode="numeric" autocomplete="off"></span></label>
+    <div class="sub-h">貯蓄</div>
+    <div class="sav">
+      <span></span><span class="sav-h">預金</span><span class="sav-h">NISA口座</span>
+      <span class="sav-who">あなた</span>
+      <span class="yen"><input type="text" class="money" id="savings" inputmode="numeric" autocomplete="off" aria-label="あなたの預金"></span>
+      <span class="yen"><input type="text" class="money" id="nisa" inputmode="numeric" autocomplete="off" aria-label="あなたのNISA口座の評価額"></span>
+      <span class="sav-who">配偶者</span>
+      <span class="yen"><input type="text" class="money" id="spSavings" inputmode="numeric" autocomplete="off" aria-label="配偶者の預金"></span>
+      <span class="yen"><input type="text" class="money" id="spNisa" inputmode="numeric" autocomplete="off" aria-label="配偶者のNISA口座の評価額"></span>
     </div>
-    <div class="hh"><span>世帯の貯蓄の合計</span><b id="hhTotal"></b></div>
+    <div class="hh-grid">
+      <span>預金の合計</span><b id="hhCash"></b>
+      <span>NISAの合計</span><b id="hhNisa"></b>
+      <span class="t">世帯の貯蓄の合計</span><b class="t" id="hhTotal"></b>
+    </div>
+    <label class="f">毎月のNISA積立額（夫婦の合計）<span class="yen"><input type="text" class="money" id="nisaMonthly" inputmode="numeric" autocomplete="off"></span></label>
+    <label class="chk"><input type="checkbox" id="nisaPause">産休・育休中は積立を止める（復職したら再開）</label>
+    <span class="foot">NISAは評価額を入れてください。値動きは計算に入れず、積立した分だけ増える想定です。毎月の積立は預金から出ていく扱いです。</span>
     <div class="row2">
       <label class="f">出産費用の見込み<span class="yen"><input type="text" class="money" id="birthCost" inputmode="numeric" autocomplete="off"></span></label>
       <label class="f">何人目のお子さん<select id="order"><option value="1">1人目</option><option value="2">2人目</option><option value="3">3人目以降</option></select></label>
@@ -331,6 +349,7 @@ h2{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 12px;tex
   <section class="card">
     <h2>世帯の貯蓄残高の推移</h2>
     <div class="chart" id="balChart"></div>
+    <div class="legend" id="balLegend" style="margin-top:6px"></div>
   </section>
 
   <section class="card">
@@ -357,13 +376,14 @@ h2{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 12px;tex
       <li>住民税は前年の所得にかかるため、休業中も納付書で払います（6月・8月・10月・翌1月）。1〜5月に休業に入る場合は、5月分までを最後のお給料から一括で引かれるのが原則です。翌年度以降の額は働いた月数からの概算です。</li>
       <li>配偶者の育休のうち、出産後8週以内の最大28日を産後パパ育休（出生時育児休業給付金67%）、残りを通常の育休として計算しています。休業中の配偶者の給与は日割りで減らし、社会保険料の免除による手取りの増加は含めていません。</li>
       <li>出生後休業支援給付金（13%）は、配偶者が出産後8週以内に14日以上育休を取ると配偶者に、出産後16週以内に14日以上取るとあなたにもつく想定です。最大28日分です。</li>
+      <li>貯蓄は「預金」と「NISA口座」に分けています。残高のグラフと「預金がいちばん減る月」は、すぐに使える預金だけで計算します。NISAは値動きを入れず、入力した評価額に積立分を足しています。</li>
       <li>生活費は内訳の合計を毎月27日ごろの出金として計算します。「出産後から」の費目は出産した月から、「復職後から」の費目は復職した月から加わります。</li>
       <li>出産育児一時金（50万円）は病院への直接支払制度を使う想定です。費用が50万円を下回れば差額を後から受け取れます。出産費用の無償化（2026年6月公布の改正法）は施行日が未定のため反映していません。</li>
       <li>児童手当は3歳未満で月15,000円（第3子以降30,000円）、出生の翌月分から、偶数月に前月までの2か月分が支給されます。</li>
       <li>「夫婦で共有するリンク」には入力内容がそのまま入っています。リンクを受け取った人は中身を見られるので、送り先に気をつけてください。リンクの内容はサーバーには保存されません。</li>
       <li>振込日はおおよその目安です。勤務先・ハローワーク・加入している健康保険の処理によって前後します。</li>
     </ul>
-    <p class="foot" style="margin-top:12px">アプリのバージョン：<span id="appVer">2026.10.29-6</span></p>
+    <p class="foot" style="margin-top:12px">アプリのバージョン：<span id="appVer">2026.10.29-7</span></p>
     <p class="foot" style="margin-top:12px">入力した内容はこのブラウザの中だけで計算され、どこにも送信されません。概算のシミュレーションのため、正確な金額は勤務先や社会保険労務士にご確認ください。</p>
   </section>
 </main>
@@ -390,7 +410,7 @@ const days=(a,b)=>Math.round((b-a)/864e5)+1;
 // 初期値（例）
 const today=new Date();const ex=addMonths(D(today.getFullYear(),today.getMonth()+1,15),5);
 const defaults={due:ex.toISOString().slice(0,10),multi:false,endMode:"1y",endCustom:"",spouseLeave:false,
-  salary:300000,takehome:235000,payday:"next",resTax:180000,spouse:280000,spSalary:360000,spPayday:"same",spOffset:0,spDays:28,living:330000,savings:1500000,spSavings:800000,bonus:0,incThis:0,socThis:0,actualBirth:"",paidDays:0,paidMode:"before",workWeek:"5",autoTake:false,age40:false,spAutoTake:false,spAge40:false,birthCost:520000,order:"1",
+  salary:300000,takehome:235000,payday:"next",resTax:180000,spouse:280000,spSalary:360000,spPayday:"same",spOffset:0,spDays:28,living:330000,savings:1500000,spSavings:800000,nisa:0,spNisa:0,nisaMonthly:0,nisaPause:false,bonus:0,incThis:0,socThis:0,actualBirth:"",paidDays:0,paidMode:"before",workWeek:"5",autoTake:false,age40:false,spAutoTake:false,spAge40:false,birthCost:520000,order:"1",
   extras:[{m:keyAdd(key(ex),-1),label:"ベビー用品（例）",amt:-100000},{m:keyAdd(key(ex),2),label:"妊婦のための支援給付・出生後分（例）",amt:50000}]};
 // 生活費の内訳。when: all=毎月 / birth=出産後から / ret=復職後から
 const LV_EXAMPLE=[["家賃・住宅ローン",90000,"all"],["食費",60000,"all"],["水道光熱費",20000,"all"],["通信費（スマホ・ネット）",12000,"all"],["保険料",15000,"all"],["車・交通費",25000,"all"],["日用品",10000,"all"],["夫婦のおこづかい",40000,"all"],["その他",28000,"all"],["おむつ・ミルク",15000,"birth"],["保育料",30000,"ret"]];
@@ -410,7 +430,7 @@ if(!state.bonusSeeded){const d=parse(state.due)||ex;const ls=addDays(d,-41);let 
     {m:jun,label:"夏のボーナス（配偶者・手取り）",amt:0},{m:dec,label:"冬のボーナス（配偶者・手取り）",amt:0}].concat(state.extras||[]);
   state.bonusSeeded=true}
 
-const fields=["due","actualBirth","multi","paidDays","paidMode","workWeek","endMode","endCustom","spouseLeave","salary","takehome","payday","resTax","incThis","socThis","bonus","autoTake","age40","spAutoTake","spAge40","spouse","spSalary","spPayday","spOffset","spDays","savings","spSavings","birthCost","order"];
+const fields=["due","actualBirth","multi","paidDays","paidMode","workWeek","endMode","endCustom","spouseLeave","salary","takehome","payday","resTax","incThis","socThis","bonus","autoTake","age40","spAutoTake","spAge40","spouse","spSalary","spPayday","spOffset","spDays","savings","spSavings","nisa","spNisa","nisaMonthly","nisaPause","birthCost","order"];
 // 金額に3けたごとのコンマを付ける
 const toNum=v=>{const t=String(v).replace(/[，,\s円]/g,"").replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/[−ー－]/g,"-");const n=parseInt(t.replace(/(?!^)-/g,"").replace(/[^\d-]/g,""),10);return isNaN(n)?0:n};
 const comma=n=>{n=Number(n)||0;return n===0?"0":n.toLocaleString("ja-JP")};
@@ -633,7 +653,9 @@ function compute(s){
     const base=items.filter(x=>x.when!=="birth"&&x.when!=="ret").reduce((t,x)=>t+Number(x.amt),0);
     if(base)push(D(y,m,27),"生活費（毎月の分）",-base,"out",{fixed:true});
     items.filter(x=>x.when==="birth"||x.when==="ret").forEach(x=>{const first=(x.when==="birth"?bKey:retKey)===kk;
-      push(D(y,m,27),(x.label||"（名前なし）")+(first?(x.when==="birth"?"（出産後から）":"（復職後から）"):""),-Number(x.amt),"out",first?{keyItem:true}:{fixed:true})})});
+      push(D(y,m,27),(x.label||"（名前なし）")+(first?(x.when==="birth"?"（出産後から）":"（復職後から）"):""),-Number(x.amt),"out",first?{keyItem:true}:{fixed:true})});
+    if(s.nisaMonthly>0){const onLeave=kk>=key(paidStart||leaveStart)&&kk<retKey;
+      if(!(s.nisaPause&&onLeave))push(D(y,m,27),"NISA積立（預金からNISAへ）",-s.nisaMonthly,"nisa",{fixed:true})}});
   // 配偶者の給与（育休の日数分を日割りで差し引く）
   if(s.spouse){for(let n=-1;n<keys.length;n++){const mk=keyAdd(startK,n);const [y,m]=mk.split("-").map(Number);const dm=dim(y,m);
     const off=sp?overlap(sp.hs,sp.he,D(y,m,1),D(y,m,dm)):0;const amt=Math.round(s.spouse*(dm-off)/dm);
@@ -643,11 +665,12 @@ function compute(s){
   s.extras.forEach(x=>{if(!x.m||!x.amt)return;const [y,m]=x.m.split("-").map(Number);push(D(y,m,20),x.label||"（名前なし）",x.amt,x.amt>0?"extra":"out",{keyItem:true})});
 
   const list=ev.filter(e=>inRange(e.k)).sort((a,b)=>a.date-b.date);
-  const start=(s.savings||0)+(s.spSavings||0);let bal=start;const months=keys.map(kk=>{const items=list.filter(e=>e.k===kk);const inn=items.filter(e=>e.amt>0).reduce((t,e)=>t+e.amt,0);const out=items.filter(e=>e.amt<0).reduce((t,e)=>t+e.amt,0);bal+=inn+out;
+  const start=(s.savings||0)+(s.spSavings||0);let bal=start;const nisaStart=(s.nisa||0)+(s.spNisa||0);let nisaBal=nisaStart;const months=keys.map(kk=>{const items=list.filter(e=>e.k===kk);
+    nisaBal+=items.filter(e=>e.cat==="nisa").reduce((t,e)=>t-e.amt,0);const inn=items.filter(e=>e.amt>0).reduce((t,e)=>t+e.amt,0);const out=items.filter(e=>e.amt<0).reduce((t,e)=>t+e.amt,0);bal+=inn+out;
     const own=items.filter(e=>e.amt>0&&(e.cat==="own"||e.cat==="public")&&!/児童手当/.test(e.label)).reduce((t,e)=>t+e.amt,0);
-    return {k:kk,items,inn,out,net:inn+out,bal,own}});
+    return {k:kk,items,inn,out,net:inn+out,bal,own,nisaBal}});
   return {fyInfo,birth,due,actual:!!parse(s.actualBirth),leaveStart,legalStart,paidStart,paidEnd,paidUsed,halfDay,paidTotal,paidLeft,lastWork,postEnd,ccStart,ccEnd,ret,shDaily,shTotal,periods,shien,months,list,
-    total67:addDays(ccStart,179),sp,start};
+    total67:addDays(ccStart,179),sp,start,nisaStart};
 }
 
 function phaseView(r){
@@ -663,7 +686,8 @@ function phaseView(r){
 
 function balChart(r){
   const ms=r.months,W=760,H=230,L=58,R=14,T=14,B=30;
-  const vals=[r.start,...ms.map(m=>m.bal)];let mx=Math.max(...vals),mn=Math.min(0,...vals);
+  const vals=[r.start,...ms.map(m=>m.bal)];const tots=[r.start+r.nisaStart,...ms.map(m=>m.bal+m.nisaBal)];const hasN=tots.some((v,i)=>v!==vals[i]);
+  let mx=Math.max(...vals,...(hasN?tots:[])),mn=Math.min(0,...vals);
   const step=niceStep((mx-mn)/4);mx=Math.ceil(mx/step)*step;mn=Math.floor(mn/step)*step;if(mx===mn)mx=mn+step;
   const x=i=>L+(W-L-R)*i/(ms.length),y=v=>T+(H-T-B)*(mx-v)/(mx-mn);
   let g="";for(let v=mn;v<=mx+1;v+=step){g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${v===0?1.4:1}"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end">${man(v)}</text>`}
@@ -672,8 +696,10 @@ function balChart(r){
   const area=path+`L${pts[pts.length-1][0]},${y(Math.max(mn,0))}L${pts[0][0]},${y(Math.max(mn,0))}Z`;
   let lab="";ms.forEach((m,i)=>{const [yy,mm]=m.k.split("-");if(i%2===0||ms.length<14)lab+=`<text x="${x(i+1)}" y="${H-8}" text-anchor="middle">${mm==="01"||i===0?yy.slice(2)+"/":""}${+mm}月</text>`});
   const minI=vals.indexOf(Math.min(...vals));
+  const tpath=hasN?tots.map((v,i)=>(i?"L":"M")+x(i).toFixed(1)+","+y(v).toFixed(1)).join(""):"";
   const dots=pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="${i===minI?4.5:2.2}" fill="${vals[i]<0?"var(--out)":"var(--in)"}"/>`).join("");
-  $("balChart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="世帯の貯蓄残高の推移">${g}<path d="${area}" fill="var(--in-soft)" opacity=".8"/><path d="${path}" fill="none" stroke="var(--in)" stroke-width="2.2"/>${dots}<text x="${pts[minI][0]}" y="${pts[minI][1]-9}" text-anchor="middle" style="fill:var(--ink);font-weight:700">最低 ${man(vals[minI])}円</text>${lab}</svg>`;
+  $("balChart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="世帯の預金残高とNISAを含めた貯蓄の推移">${g}<path d="${area}" fill="var(--in-soft)" opacity=".8"/>${hasN?`<path d="${tpath}" fill="none" stroke="var(--c4)" stroke-width="2" stroke-dasharray="6 4"/>`:""}<path d="${path}" fill="none" stroke="var(--in)" stroke-width="2.2"/>${dots}<text x="${pts[minI][0]}" y="${pts[minI][1]-9}" text-anchor="middle" style="fill:var(--ink);font-weight:700">預金の最低 ${man(vals[minI])}円</text>${lab}</svg>`;
+  $("balLegend").innerHTML=`<span><i style="background:var(--in)"></i>預金</span>${hasN?`<span><i style="background:var(--c4)"></i>預金＋NISA（点線）</span>`:""}`;
 }
 function flowChart(r){
   const ms=r.months,W=760,H=240,L=58,R=14,T=12,B=30;
@@ -697,22 +723,22 @@ function render(r){
   const fy=r.list.find(e=>/育児休業給付金/.test(e.label));
   $("stats").innerHTML=`
    <div class="stat"><span class="k">受け取れる給付金・手当</span><span class="v">${man(pub)}円</span><span class="s">出産手当金 ${man(r.shTotal)}円 ほか</span></div>
-   <div class="stat ${minM.bal<0?"bad":""}"><span class="k">世帯の貯蓄がいちばん減る月</span><span class="v">${man(minM.bal)}円</span><span class="s">${minM.k.replace("-","年")}月末</span></div>
+   <div class="stat ${minM.bal<0?"bad":""}"><span class="k">預金がいちばん減る月</span><span class="v">${man(minM.bal)}円</span><span class="s">${minM.k.replace("-","年")}月末</span></div>
    <div class="stat"><span class="k">あなたの入金がない期間</span><span class="v">${best[0]}か月</span><span class="s">${best[1]?lbl(best[1])+"〜"+lbl(best[2]):"なし"}</span></div>
    <div class="stat"><span class="k">育休給付金の初回振込</span><span class="v">${fy?(fy.date.getUTCMonth()+1)+"月ごろ":"—"}</span><span class="s">${fy?yen(fy.amt)+"（2か月分）":""}</span></div>`;
   let al="";
-  if(minM.bal<0)al+=`<div class="alert"><b>世帯の貯蓄が足りなくなる見込みです。</b> ${minM.k.replace("-","年")}月に ${yen(minM.bal)} になります。出産手当金の産前分を先に申請する、生活費を見直す、などで調整できます。</div>`;
+  if(minM.bal<0)al+=`<div class="alert"><b>預金が足りなくなる見込みです。</b> ${minM.k.replace("-","年")}月に ${yen(minM.bal)} になります。${minM.nisaBal>=-minM.bal?`NISAの取り崩しで補える額ですが、売却から入金まで数日かかり、値下がりしていると損をします。`:""}${state.nisaMonthly>0&&!state.nisaPause?"休業中のNISA積立を止めるのも一つの方法です。":""}出産手当金の産前分を先に申請する、生活費を見直す、などで調整できます。</div>`;
   else if(best[0]>=2)al+=`<div class="alert"><b>${best[0]}か月間、あなた名義の入金がありません。</b> 給付金は後払いでまとめて振り込まれるため、こうした空白ができます。この期間の生活費 ${yen(r.months.slice(best[3],best[3]+best[0]).reduce((t,m)=>t-m.out,0))} 前後を手元に用意しておくと安心です。</div>`;
   $("alerts").innerHTML=al;
   phaseView(r);balChart(r);flowChart(r);
   $("months").innerHTML=ms.map(m=>{const its=m.items.slice().sort((a,b)=>(a.fixed?1:0)-(b.fixed?1:0)||a.date-b.date);
     return `<div class="m ${m.bal<0?"neg":""}"><div class="mo">${m.k.split("-")[0]}年${+m.k.split("-")[1]}月<small>収支 ${m.net>=0?"+":""}${man(m.net)}円</small></div>
     <div class="items">${its.map(e=>`<div class="it ${e.amt>0?"in":"out"} ${e.fixed?"fixed":""} ${e.keyItem?"key":""}"><span class="l">${esc(e.label)}${e.est?'<span class="tag">目安</span>':""}</span><span class="a">${e.amt>0?"+":""}${yen(e.amt)}</span></div>`).join("")}</div>
-    <div class="bal"><div class="n">月末の世帯残高</div><div class="b">${yen(m.bal)}</div></div></div>`}).join("");
+    <div class="bal"><div class="n">月末の預金</div><div class="b">${yen(m.bal)}</div>${m.nisaBal?`<div class="n">NISA ${yen(m.nisaBal)}</div>`:""}</div></div>`}).join("");
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-function update(){readForm();state.living=livingSum(state,"all");$("livingTotal").textContent=`${yen(livingSum(state,"all"))}${livingSum(state,"birth")?`（出産後 +${comma(livingSum(state,"birth"))}円）`:""}${livingSum(state,"ret")?`（復職後 +${comma(livingSum(state,"ret"))}円）`:""}`;applyAuto();save();$("hhTotal").textContent=yen((state.savings||0)+(state.spSavings||0));const r=compute(state);if(!r)return;render(r);
+function update(){readForm();state.living=livingSum(state,"all");$("livingTotal").textContent=`${yen(livingSum(state,"all"))}${livingSum(state,"birth")?`（出産後 +${comma(livingSum(state,"birth"))}円）`:""}${livingSum(state,"ret")?`（復職後 +${comma(livingSum(state,"ret"))}円）`:""}`;applyAuto();save();$("hhCash").textContent=yen((state.savings||0)+(state.spSavings||0));$("hhNisa").textContent=yen((state.nisa||0)+(state.spNisa||0));$("hhTotal").textContent=yen((state.savings||0)+(state.spSavings||0)+(state.nisa||0)+(state.spNisa||0));const r=compute(state);if(!r)return;render(r);
   const ty=new Date().getFullYear();$("incLabel").textContent=`${ty}年の年収（${ty+1}年度の住民税の計算に使います）`;
   $("fyNote").innerHTML=r.fyInfo.map(f=>`${f.fy}年度（${f.cy}年の収入分）：${f.tax.toLocaleString("ja-JP")}円${f.inc!=null?`（年収${(f.inc/10000).toLocaleString("ja-JP",{maximumFractionDigits:1})}万円・${f.src}）`:`（${f.src}）`}`).join("<br>");
   const wd=t=>"日月火水木金土"[t.getUTCDay()];const fd=t=>`${t.getUTCFullYear()}年${t.getUTCMonth()+1}月${t.getUTCDate()}日（${wd(t)}）`;
