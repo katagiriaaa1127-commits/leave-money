@@ -199,7 +199,10 @@ h2{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 12px;tex
         <select id="paidMode"><option value="before">産休の前にまとめて使う</option><option value="instead">産前休業の代わりに使う</option></select>
       </label>
     </div>
-    <span class="foot" id="paidHint">半日は「0.5」で入力します（例：10.5）。土日休み・週5日勤務として、祝日を除かずに数えています。</span>
+    <label class="f">休みの曜日
+      <select id="workWeek"><option value="5">土日休み（週5日勤務）</option><option value="6">日曜のみ休み（土曜も勤務）</option></select>
+    </label>
+    <span class="foot" id="paidHint">半日は「0.5」で入力します（例：10.5）。有給は勤務日だけを数え、祝日は除かずに数えています。</span>
     <div class="period" id="periodBox" aria-live="polite"></div>
   </fieldset>
 
@@ -330,7 +333,7 @@ h2{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 12px;tex
   <section class="card notes">
     <h2>この計算の前提</h2>
     <ul>
-      <li>有給は土日休みの週5日勤務として数えています。「産休の前にまとめて使う」は最終出勤日が早まるだけでお金は変わりません。「産前休業の代わりに使う」は、その日数分お給料が満額出て、出産手当金はその分減ります（出産手当金は給与が出ない日だけが対象のため）。</li>
+      <li>有給は「休みの曜日」で選んだ勤務日（土日休み、または日曜のみ休み）だけを数えています。「産休の前にまとめて使う」は最終出勤日が早まるだけでお金は変わりません。「産前休業の代わりに使う」は、その日数分お給料が満額出て、出産手当金はその分減ります（出産手当金は給与が出ない日だけが対象のため）。</li>
       <li>出産手当金は「月給 ÷ 30 × 2/3」を日額とし、産前42日（多胎は98日）＋産後56日分を、産後休業が終わってから一括申請した想定です。産前分だけ先に申請すると早く受け取れます。</li>
       <li>育児休業給付金は休業開始から180日まで67%、それ以降50%。賃金日額の上限16,540円・下限3,203円（2026年8月〜2027年7月）で計算しています。2か月ごとの申請で、2か月分がまとめて振り込まれる想定です。</li>
       <li>産休・育休中は申出により健康保険料・厚生年金保険料が免除され、給付金は非課税です。</li>
@@ -345,7 +348,7 @@ h2{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 12px;tex
       <li>「夫婦で共有するリンク」には入力内容がそのまま入っています。リンクを受け取った人は中身を見られるので、送り先に気をつけてください。リンクの内容はサーバーには保存されません。</li>
       <li>振込日はおおよその目安です。勤務先・ハローワーク・加入している健康保険の処理によって前後します。</li>
     </ul>
-    <p class="foot" style="margin-top:12px">アプリのバージョン：<span id="appVer">2026.10.29-1</span></p>
+    <p class="foot" style="margin-top:12px">アプリのバージョン：<span id="appVer">2026.10.29-2</span></p>
     <p class="foot" style="margin-top:12px">入力した内容はこのブラウザの中だけで計算され、どこにも送信されません。概算のシミュレーションのため、正確な金額は勤務先や社会保険労務士にご確認ください。</p>
   </section>
 </main>
@@ -372,7 +375,7 @@ const days=(a,b)=>Math.round((b-a)/864e5)+1;
 // 初期値（例）
 const today=new Date();const ex=addMonths(D(today.getFullYear(),today.getMonth()+1,15),5);
 const defaults={due:ex.toISOString().slice(0,10),multi:false,endMode:"1y",endCustom:"",spouseLeave:false,
-  salary:300000,takehome:235000,payday:"next",resTax:180000,spouse:280000,spSalary:360000,spPayday:"same",spOffset:0,spDays:28,living:330000,savings:1500000,spSavings:800000,bonus:0,incThis:0,socThis:0,actualBirth:"",paidDays:0,paidMode:"before",autoTake:false,age40:false,spAutoTake:false,spAge40:false,birthCost:520000,order:"1",
+  salary:300000,takehome:235000,payday:"next",resTax:180000,spouse:280000,spSalary:360000,spPayday:"same",spOffset:0,spDays:28,living:330000,savings:1500000,spSavings:800000,bonus:0,incThis:0,socThis:0,actualBirth:"",paidDays:0,paidMode:"before",workWeek:"5",autoTake:false,age40:false,spAutoTake:false,spAge40:false,birthCost:520000,order:"1",
   extras:[{m:keyAdd(key(ex),-1),label:"ベビー用品（例）",amt:-100000},{m:keyAdd(key(ex),2),label:"妊婦のための支援給付・出生後分（例）",amt:50000}]};
 let state;
 try{state=JSON.parse(localStorage.getItem("leaveplan")||"null")}catch(e){state=null}
@@ -384,7 +387,7 @@ if(!state.bonusSeeded){const d=parse(state.due)||ex;const ls=addDays(d,-41);let 
     {m:jun,label:"夏のボーナス（配偶者・手取り）",amt:0},{m:dec,label:"冬のボーナス（配偶者・手取り）",amt:0}].concat(state.extras||[]);
   state.bonusSeeded=true}
 
-const fields=["due","actualBirth","multi","paidDays","paidMode","endMode","endCustom","spouseLeave","salary","takehome","payday","resTax","incThis","socThis","bonus","autoTake","age40","spAutoTake","spAge40","spouse","spSalary","spPayday","spOffset","spDays","living","savings","spSavings","birthCost","order"];
+const fields=["due","actualBirth","multi","paidDays","paidMode","workWeek","endMode","endCustom","spouseLeave","salary","takehome","payday","resTax","incThis","socThis","bonus","autoTake","age40","spAutoTake","spAge40","spouse","spSalary","spPayday","spOffset","spDays","living","savings","spSavings","birthCost","order"];
 // 金額に3けたごとのコンマを付ける
 const toNum=v=>{const t=String(v).replace(/[，,\s円]/g,"").replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/[−ー－]/g,"-");const n=parseInt(t.replace(/(?!^)-/g,"").replace(/[^\d-]/g,""),10);return isNaN(n)?0:n};
 const comma=n=>{n=Number(n)||0;return n===0?"0":n.toLocaleString("ja-JP")};
@@ -464,7 +467,7 @@ function compute(s){
   // 産前休業は予定日を基準に始まり、実際の出産日まで続く（予定日より遅れればその分延びる）
   let legalStart=addDays(due,-(pre-1));if(birth<legalStart)legalStart=birth;
   // 有給：土日を除いた日数で数える
-  const isWork=t=>{const w=t.getUTCDay();return w!==0&&w!==6};
+  const isWork=t=>{const w=t.getUTCDay();return w!==0&&(s.workWeek==="6"||w!==6)};
   const paidTotal=Math.max(0,Math.round((Number(s.paidDays)||0)*2)/2);
   const nPaid=Math.floor(paidTotal),halfPaid=paidTotal-nPaid>=0.5;
   let leaveStart=legalStart,paidStart=null,paidEnd=null,paidUsed=0;
