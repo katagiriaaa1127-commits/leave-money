@@ -38,6 +38,7 @@
 html{-webkit-text-size-adjust:100%}
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body{margin:0}
+[hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.65;padding-inline:16px;padding-block:24px 48px}
 .wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
 .hero{display:flex;align-items:center;justify-content:space-between;gap:16px}
@@ -95,6 +96,12 @@ input[readonly]{background:var(--sunk);color:var(--muted)}
 .lv input,.lv select{background:var(--surface);font-size:14px;padding:5px 7px}
 .lv .yen input{padding-right:26px;text-align:right}
 .lv .del{background:none;border:0;color:var(--muted);font-size:18px;line-height:1;padding:0 4px;grid-row:1/3;grid-column:3}
+.lv-bonus{grid-column:1/3;display:flex;flex-direction:column;gap:6px}
+.lv-btoggle{align-self:flex-start;background:none;border:0;padding:2px 0;color:var(--ink);font-size:12.5px;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--cat) 60%,transparent);text-underline-offset:3px}
+.lv-bbody{display:flex;flex-direction:column;gap:6px}
+.mchips{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
+.mchip{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:4px 0;font-size:12.5px;font-variant-numeric:tabular-nums}
+.mchip[aria-pressed="true"]{background:var(--cat);border-color:var(--cat);color:#fff;font-weight:700}
 .extra.flash{animation:flash 1.6s ease-out}
 @keyframes flash{0%,30%{box-shadow:0 0 0 2px var(--in);background:var(--in-soft)}100%{box-shadow:0 0 0 2px transparent}}
 .sav{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);gap:6px 8px;align-items:center}
@@ -280,7 +287,7 @@ h2{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 12px;tex
     <div id="livingList" class="lv-list"></div>
     <button type="button" class="btn-ghost" id="addLiving">＋ 費目を追加</button>
     <div class="hh"><span>毎月の生活費の合計</span><b id="livingTotal"></b></div>
-    <span class="foot">「いつから」で、おむつ代は出産後から、保育料は復職後から、のように始まる月を選べます。</span>
+    <span class="foot">「いつから」で、おむつ代は出産後から、保育料は復職後から、のように始まる月を選べます。ローンのボーナス払いや自動車税などは、各費目の「＋ ボーナス月・年払いの上乗せ」から入れられます。</span>
     <div class="sub-h">貯蓄</div>
     <div class="sav">
       <span></span><span class="sav-h">預金</span><span class="sav-h">NISA口座</span>
@@ -377,13 +384,14 @@ h2{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 12px;tex
       <li>配偶者の育休のうち、出産後8週以内の最大28日を産後パパ育休（出生時育児休業給付金67%）、残りを通常の育休として計算しています。休業中の配偶者の給与は日割りで減らし、社会保険料の免除による手取りの増加は含めていません。</li>
       <li>出生後休業支援給付金（13%）は、配偶者が出産後8週以内に14日以上育休を取ると配偶者に、出産後16週以内に14日以上取るとあなたにもつく想定です。最大28日分です。</li>
       <li>貯蓄は「預金」と「NISA口座」に分けています。残高のグラフと「預金がいちばん減る月」は、すぐに使える預金だけで計算します。NISAは値動きを入れず、入力した評価額に積立分を足しています。</li>
+      <li>生活費の各費目の「ボーナス月・年払いの上乗せ」は、選んだ月にだけ毎月の金額へ上乗せします。休業中もそのまま出金として計算します。</li>
       <li>生活費は内訳の合計を毎月27日ごろの出金として計算します。「出産後から」の費目は出産した月から、「復職後から」の費目は復職した月から加わります。</li>
       <li>出産育児一時金（50万円）は病院への直接支払制度を使う想定です。費用が50万円を下回れば差額を後から受け取れます。出産費用の無償化（2026年6月公布の改正法）は施行日が未定のため反映していません。</li>
       <li>児童手当は3歳未満で月15,000円（第3子以降30,000円）、出生の翌月分から、偶数月に前月までの2か月分が支給されます。</li>
       <li>「夫婦で共有するリンク」には入力内容がそのまま入っています。リンクを受け取った人は中身を見られるので、送り先に気をつけてください。リンクの内容はサーバーには保存されません。</li>
       <li>振込日はおおよその目安です。勤務先・ハローワーク・加入している健康保険の処理によって前後します。</li>
     </ul>
-    <p class="foot" style="margin-top:12px">アプリのバージョン：<span id="appVer">2026.10.29-7</span></p>
+    <p class="foot" style="margin-top:12px">アプリのバージョン：<span id="appVer">2026.10.29-8</span></p>
     <p class="foot" style="margin-top:12px">入力した内容はこのブラウザの中だけで計算され、どこにも送信されません。概算のシミュレーションのため、正確な金額は勤務先や社会保険労務士にご確認ください。</p>
   </section>
 </main>
@@ -473,12 +481,26 @@ function save(){try{localStorage.setItem("leaveplan",JSON.stringify(state));cons
 // 費目名から色を決める（当てはまらないときは並び順で）
 function lvColor(label,i){const t=label||"";const map=[[/家賃|住宅|ローン|管理費/,1],[/食費|食|外食/,2],[/光熱|電気|ガス|水道/,3],[/通信|スマホ|携帯|ネット|Wi-?Fi/i,4],[/保険/,5],[/車|交通|ガソリン|駐車/,6],[/日用品|消耗/,9],[/こづかい|小遣い/,8],[/おむつ|ミルク|ベビー|赤ちゃん/,7],[/保育|幼稚園|教育|習い事/,4],[/その他/,10]];
   for(const [re,c] of map)if(re.test(t))return `var(--c${c})`;return `var(--c${[1,2,5,7,3,8,4,6,9][i%9]})`}
+function bonusSummary(x){const ms=x.bonusMonths||[];return x.bonusAmt>0&&ms.length?`${ms.map(n=>n+"月").join("・")}は +${comma(x.bonusAmt)}円（変更）`:"＋ ボーナス月・年払いの上乗せ"}
 function renderLiving(){const box=$("livingList");box.innerHTML="";state.livingItems.forEach((x,i)=>{
   const d=document.createElement("div");d.className="lv";d.style.setProperty("--cat",lvColor(x.label,i));
   d.innerHTML=`<input type="text" id="exlvl${i}" value="${esc(x.label||"")}" aria-label="費目" placeholder="費目"><span class="yen"><input type="text" class="money" id="exlvm${i}" value="${comma(x.amt)}" inputmode="numeric" autocomplete="off" aria-label="金額"></span>
     <select class="lv-when" id="exlvt${i}" aria-label="いつから"><option value="all">毎月</option><option value="birth">出産後から</option><option value="ret">復職後から</option></select>
-    <button type="button" class="del" aria-label="この費目を削除">×</button>`;
+    <button type="button" class="del" aria-label="この費目を削除">×</button>
+    <div class="lv-bonus">
+      <button type="button" class="lv-btoggle" aria-expanded="false">${bonusSummary(x)}</button>
+      <div class="lv-bbody" hidden>
+        <label class="f">決まった月に上乗せする金額（ボーナス払い・年払いなど）<span class="yen"><input type="text" class="money" id="exlvb${i}" value="${comma(x.bonusAmt||0)}" inputmode="numeric" autocomplete="off"></span></label>
+        <div class="mchips" role="group" aria-label="上乗せする月">${[1,2,3,4,5,6,7,8,9,10,11,12].map(n=>`<button type="button" class="mchip" data-m="${n}" aria-pressed="${(x.bonusMonths||[]).includes(n)}">${n}月</button>`).join("")}</div>
+      </div>
+    </div>`;
   d.querySelector(`#exlvt${i}`).value=x.when||"all";
+  const tg=d.querySelector(".lv-btoggle"),bb=d.querySelector(".lv-bbody");
+  const openB=o=>{bb.hidden=!o;tg.setAttribute("aria-expanded",String(o))};if(x.bonusAmt||x._open)openB(true);
+  tg.addEventListener("click",()=>{x._open=bb.hidden;openB(bb.hidden)});
+  d.querySelector(`#exlvb${i}`).addEventListener("input",e=>{x.bonusAmt=toNum(e.target.value);tg.textContent=bonusSummary(x);update()});
+  d.querySelectorAll(".mchip").forEach(c=>c.addEventListener("click",()=>{const n=+c.dataset.m;const set=new Set(x.bonusMonths||[]);set.has(n)?set.delete(n):set.add(n);
+    x.bonusMonths=[...set].sort((a,b)=>a-b);c.setAttribute("aria-pressed",String(set.has(n)));tg.textContent=bonusSummary(x);update()}));
   d.querySelector(`#exlvl${i}`).addEventListener("input",e=>{x.label=e.target.value;d.style.setProperty("--cat",lvColor(x.label,i));update()});
   d.querySelector(`#exlvm${i}`).addEventListener("input",e=>{x.amt=toNum(e.target.value);update()});
   d.querySelector(`#exlvt${i}`).addEventListener("change",e=>{x.when=e.target.value;update()});
@@ -649,11 +671,13 @@ function compute(s){
   let k=startK;const keys=[];while(k<=endK){keys.push(k);k=keyAdd(k,1)}
   keys.forEach(kk=>{const [y,m]=kk.split("-").map(Number);
     const retKey=key(ret),bKey=key(birth);
-    const items=(s.livingItems||[]).filter(x=>(Number(x.amt)||0)!==0&&(x.when==="birth"?kk>=bKey:x.when==="ret"?kk>=retKey:true));
+    const active=(s.livingItems||[]).filter(x=>x.when==="birth"?kk>=bKey:x.when==="ret"?kk>=retKey:true);
+    const items=active.filter(x=>(Number(x.amt)||0)!==0);
     const base=items.filter(x=>x.when!=="birth"&&x.when!=="ret").reduce((t,x)=>t+Number(x.amt),0);
     if(base)push(D(y,m,27),"生活費（毎月の分）",-base,"out",{fixed:true});
     items.filter(x=>x.when==="birth"||x.when==="ret").forEach(x=>{const first=(x.when==="birth"?bKey:retKey)===kk;
       push(D(y,m,27),(x.label||"（名前なし）")+(first?(x.when==="birth"?"（出産後から）":"（復職後から）"):""),-Number(x.amt),"out",first?{keyItem:true}:{fixed:true})});
+    active.filter(x=>(Number(x.bonusAmt)||0)>0&&(x.bonusMonths||[]).includes(m)).forEach(x=>push(D(y,m,27),`${x.label||"（名前なし）"}（${Number(x.amt)?"ボーナス月の上乗せ":"年払い"}）`,-Number(x.bonusAmt),"out",{keyItem:true}));
     if(s.nisaMonthly>0){const onLeave=kk>=key(paidStart||leaveStart)&&kk<retKey;
       if(!(s.nisaPause&&onLeave))push(D(y,m,27),"NISA積立（預金からNISAへ）",-s.nisaMonthly,"nisa",{fixed:true})}});
   // 配偶者の給与（育休の日数分を日割りで差し引く）
