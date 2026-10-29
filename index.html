@@ -391,7 +391,7 @@ h2{font-family:var(--display);font-weight:700;font-size:17px;margin:0 0 12px;tex
       <li>「夫婦で共有するリンク」には入力内容がそのまま入っています。リンクを受け取った人は中身を見られるので、送り先に気をつけてください。リンクの内容はサーバーには保存されません。</li>
       <li>振込日はおおよその目安です。勤務先・ハローワーク・加入している健康保険の処理によって前後します。</li>
     </ul>
-    <p class="foot" style="margin-top:12px">アプリのバージョン：<span id="appVer">2026.10.29-8</span></p>
+    <p class="foot" style="margin-top:12px">アプリのバージョン：<span id="appVer">2026.10.29-9</span></p>
     <p class="foot" style="margin-top:12px">入力した内容はこのブラウザの中だけで計算され、どこにも送信されません。概算のシミュレーションのため、正確な金額は勤務先や社会保険労務士にご確認ください。</p>
   </section>
 </main>
@@ -448,7 +448,10 @@ function liveComma(el){const v=el.value;const pos=el.selectionStart??v.length;co
   const out=(neg?"-":"")+Number(digits).toLocaleString("ja-JP");el.value=out;
   let k=0,p=neg?1:0;while(p<out.length&&k<before){if(/\d/.test(out[p]))k++;p++}
   try{el.setSelectionRange(p,p)}catch(e){}}
-document.addEventListener("input",e=>{const el=e.target;if(el.classList&&el.classList.contains("money")&&!el.id.startsWith("exa"))liveComma(el)},true);
+// 入力中は数字をそのまま表示し（日本語キーボードの変換中に書き換えると数字の順番が崩れるため）、入力欄を離れたらコンマを付ける
+const isMoney=el=>el&&el.classList&&el.classList.contains("money")&&!el.readOnly;
+document.addEventListener("focusin",e=>{const el=e.target;if(!isMoney(el))return;const raw=String(el.value).replace(/[,，\s]/g,"");el.value=raw==="0"?"":raw},true);
+document.addEventListener("focusout",e=>{const el=e.target;if(!isMoney(el))return;el.value=comma(toNum(el.value))},true);
 // 手取りの概算（2026年度：協会けんぽ栃木県の料率、厚生年金9.15%、雇用保険0.5%、所得税は扶養なし）
 const RATE={health:9.82,care:1.62,kodomo:0.23,pension:18.3,emp:0.5};
 function itaxAnnual(inc,socialY){
@@ -515,7 +518,7 @@ function renderExtras(focusItem,what){sortExtras();const box=$("extras");box.inn
   d.querySelector(`#exm${i}`).addEventListener("input",e=>{x.m=e.target.value;update()});
   d.querySelector(`#exm${i}`).addEventListener("change",()=>{const before=state.extras.indexOf(x);sortExtras();if(state.extras.indexOf(x)!==before){renderExtras(x,"moved");save()}});
   d.querySelector(`#exl${i}`).addEventListener("input",e=>{x.label=e.target.value;update()});
-  d.querySelector(`#exa${i}`).addEventListener("input",e=>{liveComma(e.target);x.amt=toNum(e.target.value);e.target.classList.toggle("plus",x.amt>0);e.target.classList.toggle("minus",x.amt<0);update()});
+  d.querySelector(`#exa${i}`).addEventListener("input",e=>{x.amt=toNum(e.target.value);e.target.classList.toggle("plus",x.amt>0);e.target.classList.toggle("minus",x.amt<0);update()});
   d.querySelector(".del").addEventListener("click",()=>{state.extras.splice(i,1);renderExtras();update()});
   box.appendChild(d);
   if(focusItem===x){d.classList.add("flash");setTimeout(()=>d.classList.remove("flash"),1600);try{d.scrollIntoView({block:"nearest",behavior:"smooth"})}catch(e){}
